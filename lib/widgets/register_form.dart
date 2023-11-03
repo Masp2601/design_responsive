@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../api/authentication_api.dart';
+import '../utils/dialogs.dart';
 import '../utils/responsive.dart';
 import 'input_text.dart';
 
@@ -13,10 +15,18 @@ class RegisterForm extends StatefulWidget {
 class _RegisterFormState extends State<RegisterForm> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   String _user = '', _password = '', _email = '';
-  _submit() {
+  final AuthenticationApi _authApi = AuthenticationApi();
+
+  Future<void> _submit() async {
     final isOk = _formKey.currentState!.validate();
     if (isOk) {
-      print('$_user - $_password');
+      ProgressDialog.show(context);
+      await _authApi.register(
+        user: _user,
+        email: _email,
+        password: _password,
+      );
+      ProgressDialog.dissmiss(context);
     }
   }
 
@@ -65,7 +75,7 @@ class _RegisterFormState extends State<RegisterForm> {
               label: 'CONTRASEÑA',
               fontSize: responsive.dp(responsive.isTablet ? 1.2 : 1.5),
               onChanged: (text) {
-                _user = text;
+                _password = text;
               },
               validator: (text) {
                 if (text!.trim().length < 6) {
@@ -106,7 +116,7 @@ class _RegisterFormState extends State<RegisterForm> {
                         color: Colors.transparent),
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(context, 'login');
+                    Navigator.pop(context);
                   },
                   child: Text('Inicia sesion',
                       style: TextStyle(
