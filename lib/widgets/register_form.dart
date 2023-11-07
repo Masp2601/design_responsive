@@ -1,6 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+import 'package:logger/logger.dart';
 
 import '../api/authentication_api.dart';
+import '../pages/home_page.dart';
 import '../utils/dialogs.dart';
 import '../utils/responsive.dart';
 import 'input_text.dart';
@@ -15,18 +20,41 @@ class RegisterForm extends StatefulWidget {
 class _RegisterFormState extends State<RegisterForm> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   String _user = '', _password = '', _email = '';
-  final AuthenticationApi _authApi = AuthenticationApi();
+  final Logger _logger = Logger();
 
   Future<void> _submit() async {
     final isOk = _formKey.currentState!.validate();
     if (isOk) {
       ProgressDialog.show(context);
-      await _authApi.register(
+      final authenticationApi = GetIt.instance<AuthenticationApi>();
+      final response = await authenticationApi.register(
         user: _user,
         email: _email,
         password: _password,
       );
+      // ignore: use_build_context_synchronously
       ProgressDialog.dissmiss(context);
+      if (response.data != null) {
+        _logger.i('Usuario registrado');
+        // ignore: use_build_context_synchronously
+        Navigator.pushAndRemoveUntil(
+            context, HomePage.routeName as Route<Object?>, (_) => false);
+      } else {
+        _logger.e('Error al registrar usuario ${response.error}');
+        String message = response.error!.message!;
+        if (response.error!.statusCode == -1) {
+          message = 'No hay conexion a internet';
+        } else if (response.error!.statusCode == 409) {
+          message =
+              'El usuario ya existe ${jsonEncode(response.error!.data['message'])}}';
+        }
+        // ignore: use_build_context_synchronously
+        Dialogs.alert(
+          context,
+          title: 'ERROR',
+          description: message,
+        );
+      }
     }
   }
 
@@ -73,6 +101,7 @@ class _RegisterFormState extends State<RegisterForm> {
             InputText(
               keyboardType: TextInputType.text,
               label: 'CONTRASEÑA',
+              obscureText: true,
               fontSize: responsive.dp(responsive.isTablet ? 1.2 : 1.5),
               onChanged: (text) {
                 _password = text;

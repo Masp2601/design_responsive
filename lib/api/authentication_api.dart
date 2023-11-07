@@ -1,30 +1,33 @@
-import 'package:dio/dio.dart';
-import 'package:logger/logger.dart';
+import '../helpers/http.dart';
+import '../helpers/http_response.dart';
 
 class AuthenticationApi {
-  final Dio _dio = Dio();
-  final Logger _logger = Logger();
+  final Http _http;
 
-  register(
-      {required String user,
-      required String email,
-      required String password}) async {
-    try {
-      await Future.delayed(const Duration(seconds: 3));
-      final response = await _dio.post(
-        'http://localhost:3000/api/auth/register',
-        options: Options(
-          headers: {'Content-Type': 'application/json'},
-        ),
-        data: {
-          'user': user,
-          'email': email,
-          'password': password,
-        },
-      );
-      return response.data;
-    } catch (e) {
-      _logger.e(e);
-    }
+  AuthenticationApi(this._http);
+
+  Future<HttpResponse> register(
+      {required String user, required String email, required String password}) {
+    return _http.request(
+      '/api/auth/register',
+      method: "POST",
+      data: {
+        'user': user,
+        'email': email,
+        'password': password,
+      },
+    );
+  }
+
+  Future<HttpResponse> login(
+      {required String user, required String password}) async {
+    return _http.request(
+      '/api/auth/login',
+      method: "POST",
+      data: {
+        'user': user,
+        'password': password,
+      },
+    );
   }
 }

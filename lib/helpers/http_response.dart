@@ -1,3 +1,6 @@
+// ignore: depend_on_referenced_packages
+import 'package:meta/meta.dart' show required;
+
 class HttpResponse {
   final dynamic data;
   final dynamic error;
@@ -10,11 +13,11 @@ class HttpResponse {
 
   static HttpResponse fail(
           {required int statusCode,
-          required dynamic data,
+          @required dynamic data,
           required String message}) =>
       HttpResponse(
         null,
-        HttpError(statusCode: statusCode, data: data, message: message),
+        HttpError(statusCode as String, data, message),
       );
 }
 

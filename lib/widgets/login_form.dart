@@ -1,5 +1,11 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
+import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
+
+import '../api/authentication_api.dart';
+import '../pages/home_page.dart';
+import '../utils/dialogs.dart';
 import '../utils/responsive.dart';
 import 'input_text.dart';
 
@@ -13,10 +19,40 @@ class LoginForm extends StatefulWidget {
 class _LoginFormState extends State<LoginForm> {
   final GlobalKey<FormState> _formKey = GlobalKey();
   String _user = '', _password = '';
-  _submit() {
+  Future<void> _submit() async {
     final isOk = _formKey.currentState!.validate();
     if (isOk) {
-      print('$_user - $_password');
+      ProgressDialog.show(context);
+      final authenticationApi = GetIt.instance<AuthenticationApi>();
+      final response = await authenticationApi.login(
+        user: _user,
+        password: _password,
+      );
+      // ignore: use_build_context_synchronously
+      ProgressDialog.dissmiss(context);
+
+      if (response.data != null) {
+        // ignore: use_build_context_synchronously
+        Navigator.pushAndRemoveUntil(
+            context, HomePage.routeName as Route<Object?>, (_) => false);
+      } else {
+        String message = response.error!.message!;
+        if (response.error!.statusCode == -1) {
+          message = 'No hay conexion a internet';
+        } else if (response.error!.statusCode == 403) {
+          message =
+              'Contraseña incorrecta ${jsonEncode(response.error!.data['message'])}}';
+        } else if (response.error!.statusCode == 404) {
+          message =
+              'Usuario no encontrado ${jsonEncode(response.error!.data['message'])}}';
+        }
+        // ignore: use_build_context_synchronously
+        Dialogs.alert(
+          context,
+          title: 'ERROR',
+          description: message,
+        );
+      }
     }
   }
 
